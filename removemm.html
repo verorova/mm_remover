@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>CSV Cleaner 3000 MEGA PRO MAX</title>
+  <style>
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      text-align: center;
+      background: #0d1117;
+      color: #e6edf3;
+      margin: 0;
+      padding: 60px;
+    }
+    .container {
+      background: #161b22;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      display: inline-block;
+      max-width: 650px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      color: #58a6ff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    p {
+      font-size: 16px;
+      margin-bottom: 25px;
+      color: #8b949e;
+    }
+    input[type=file] {
+      margin: 20px 0;
+      font-size: 15px;
+      color: #e6edf3;
+    }
+    button {
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: white;
+      padding: 12px 28px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 18px rgba(35,134,54,0.4);
+    }
+    #progressBar {
+      width: 100%;
+      background: #21262d;
+      border-radius: 10px;
+      margin-top: 20px;
+      height: 18px;
+      overflow: hidden;
+      display: none;
+    }
+    #progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #58a6ff, #79c0ff);
+      transition: width 0.3s ease;
+    }
+    a {
+      display: block;
+      margin-top: 25px;
+      font-size: 17px;
+      font-weight: 500;
+      color: #58a6ff;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    a:hover {
+      color: #79c0ff;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CSV Cleaner 3000 MEGA PRO MAX</h1>
+    <p>Загрузи CSV</code>.</p>
+    
+    <input type="file" id="fileInput" accept=".csv"><br>
+    <button onclick="processFile()">Очистить и скачать</button>
+    
+    <div id="progressBar">
+      <div id="progress"></div>
+    </div>
+    
+    <a id="downloadLink" style="display:none;">Скачать очищенный файл</a>
+  </div>
+
+  <script>
+    function cleanJson(jsonStr) {
+      try {
+        let obj = JSON.parse(jsonStr);
+        delete obj.max_multiplier;
+        return JSON.stringify(obj);
+      } catch {
+        return jsonStr;
+      }
+    }
+
+    function processFile() {
+      const fileInput = document.getElementById('fileInput');
+      if (!fileInput.files.length) {
+        alert("Выбери CSV файл.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      const progressBar = document.getElementById("progressBar");
+      const progress = document.getElementById("progress");
+
+      progressBar.style.display = "block";
+      progress.style.width = "0%";
+
+      reader.onload = function(e) {
+        let text = e.target.result;
+        let rows = text.split("\n").map(r => r.split(/,(?=\{)/));
+
+        let header = rows[0];
+        let jsonIndex = header.length - 1;
+
+        for (let i = 1; i < rows.length; i++) {
+          if (rows[i][jsonIndex]) {
+            rows[i][jsonIndex] = cleanJson(rows[i][jsonIndex]);
+          }
+          // Обновляем прогресс
+          progress.style.width = Math.round((i / rows.length) * 100) + "%";
+        }
+
+        let cleaned = rows.map(r => r.join(",")).join("\n");
+        let blob = new Blob([cleaned], { type: "text/csv" });
+
+        let link = document.getElementById("downloadLink");
+        link.href = URL.createObjectURL(blob);
+        link.download = "game_tables_report_cleaned.csv";
+        link.style.display = "block";
+
+        // Финализируем прогресс
+        progress.style.width = "100%";
+      };
+      reader.readAsText(file);
+    }
+  </script>
+</body>
+</html>
